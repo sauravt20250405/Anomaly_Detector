@@ -1,6 +1,10 @@
-streamlit
+flask
+flask-socketio
+eventlet
+gunicorn
 scikit-learn
-numpy
 pandas
+numpy
 plotly
+fpdf
 python-dotenv
