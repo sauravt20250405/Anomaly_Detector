@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Anomaly Detection &amp; Alerts Feed</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 px-6 py-3 bg-white dark:bg-[#15212c]">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-slate-900 dark:text-white">
+<div class="size-6 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl">monitor_heart</span>
+</div>
+<h2 class="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-[-0.015em]">HealthAI Monitrix</h2>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors text-sm font-medium leading-normal" href="#">Dashboard</a>
+<a class="text-primary text-sm font-medium leading-normal border-b-2 border-primary py-4" href="#">Alerts Feed</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors text-sm font-medium leading-normal" href="#">Patients List</a>
+<a class="text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary transition-colors text-sm font-medium leading-normal" href="#">Model Settings</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<label class="hidden lg:flex flex-col min-w-40 !h-10 max-w-64">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#1a2633]">
+<div class="text-slate-400 dark:text-slate-500 flex items-center justify-center pl-3">
+<span class="material-symbols-outlined text-xl">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-slate-900 dark:text-white focus:outline-0 focus:ring-0 border-none bg-transparent h-full placeholder:text-slate-400 dark:placeholder:text-slate-500 px-3 text-sm font-normal leading-normal" placeholder="Search Patient ID..." value=""/>
+</div>
+</label>
+<div class="relative flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+</span>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-slate-200 dark:border-slate-700 cursor-pointer" data-alt="Profile picture of a doctor" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDyWTFrkKcdVdCDGjTPdjmr-M-QV0azlUvQwwNYFO0RhITRXm4ZW9JemnbCGjeFsXby8Moor3xWhbqN5aVEa_Gla6yidYGIqM1gq-0w6vs-Ko1rnK0HiuyNf61cORNzk0wFS7CEO5-DCzODvdbnPK1_cPyo6G7sYfDJV_QR4T_fTB8jxTwF1W0p1Mqm1lMCu0gaIbWkPq5sgDSOuAgW7nPk0YeMM1sgFQ4rwtk88-E-t8LfxcyQXdoRnXTBNMLZUtFBLTRA6b2_N9mA");'></div>
+</div>
+</header>
+<main class="flex-1 flex flex-col lg:flex-row overflow-hidden h-[calc(100vh-65px)]">
+<!-- Left Panel: Alerts Feed -->
+<section class="w-full lg:w-[60%] xl:w-[55%] flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#15212c] overflow-y-auto">
+<div class="sticky top-0 bg-white dark:bg-[#15212c] z-10 p-6 border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between mb-4">
+<h1 class="text-slate-900 dark:text-white text-2xl font-bold leading-tight">Live Alerts Feed</h1>
+<div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+<span class="material-symbols-outlined text-base">refresh</span>
+<span>Updated just now</span>
+</div>
+</div>
+<div class="flex gap-2 flex-wrap">
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white px-4 text-sm font-medium leading-normal hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700">
+                    All Alerts <span class="ml-1 bg-slate-200 dark:bg-slate-700 rounded-full px-2 py-0.5 text-xs">24</span>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 px-4 text-sm font-medium leading-normal border border-red-200 dark:border-red-800/30 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+                    HIGH <span class="ml-1 bg-red-100 dark:bg-red-900/50 rounded-full px-2 py-0.5 text-xs">5</span>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 px-4 text-sm font-medium leading-normal border border-amber-200 dark:border-amber-800/30 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors">
+                    MEDIUM <span class="ml-1 bg-amber-100 dark:bg-amber-900/50 rounded-full px-2 py-0.5 text-xs">12</span>
+</button>
+<button class="flex h-8 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 px-4 text-sm font-medium leading-normal border border-blue-200 dark:border-blue-800/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors">
+                    LOW <span class="ml-1 bg-blue-100 dark:bg-blue-900/50 rounded-full px-2 py-0.5 text-xs">7</span>
+</button>
+</div>
+</div>
+<div class="flex-1 p-4">
+<div class="flex flex-col gap-3">
+<!-- Alert Item 1 (Active) -->
+<div class="group flex flex-col rounded-xl border-2 border-primary bg-primary/5 p-4 cursor-pointer relative overflow-hidden transition-all shadow-sm">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center rounded-md bg-red-50 dark:bg-red-900/30 px-2 py-1 text-xs font-medium text-red-700 dark:text-red-400 ring-1 ring-inset ring-red-600/10 dark:ring-red-500/20">HIGH</span>
+<span class="text-sm font-medium text-slate-500 dark:text-slate-400">10:42 AM</span>
+</div>
+<div class="flex items-center gap-1 text-slate-400">
+<span class="text-xs font-medium">Anomaly Score:</span>
+<span class="text-sm font-bold text-red-600 dark:text-red-400">98.5%</span>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                PT-4921 <span class="text-sm font-normal text-slate-500 dark:text-slate-400">(ICU Bed 4)</span>
+</h3>
+<p class="text-sm text-slate-700 dark:text-slate-300 mt-1 font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-red-500">vital_signs</span>
+                                Heart Rate &gt; 150 bpm (Sustained)
+                            </p>
+</div>
+<span class="material-symbols-outlined text-primary">chevron_right</span>
+</div>
+</div>
+<!-- Alert Item 2 -->
+<div class="group flex flex-col rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2633] p-4 cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500 hidden group-hover:block opacity-50"></div>
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center rounded-md bg-red-50 dark:bg-red-900/30 px-2 py-1 text-xs font-medium text-red-700 dark:text-red-400 ring-1 ring-inset ring-red-600/10 dark:ring-red-500/20">HIGH</span>
+<span class="text-sm font-medium text-slate-500 dark:text-slate-400">10:39 AM</span>
+</div>
+<div class="flex items-center gap-1 text-slate-400">
+<span class="text-xs font-medium">Anomaly Score:</span>
+<span class="text-sm font-bold text-red-600 dark:text-red-400">95.2%</span>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                PT-8302 <span class="text-sm font-normal text-slate-500 dark:text-slate-400">(Ward A, Room 12)</span>
+</h3>
+<p class="text-sm text-slate-700 dark:text-slate-300 mt-1 font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-red-500">air</span>
+                                SpO2 Drop to 88%
+                            </p>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+<!-- Alert Item 3 -->
+<div class="group flex flex-col rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a2633] p-4 cursor-pointer hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-amber-500 hidden group-hover:block opacity-50"></div>
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-3">
+<span class="inline-flex items-center rounded-md bg-amber-50 dark:bg-amber-900/30 px-2 py-1 text-xs font-medium text-amber-700 dark:text-amber-400 ring-1 ring-inset ring-amber-600/20 dark:ring-amber-500/20">MEDIUM</span>
+<span class="text-sm font-medium text-slate-500 dark:text-slate-400">10:35 AM</span>
+</div>
+<div class="flex items-center gap-1 text-slate-400">
+<span class="text-xs font-medium">Anomaly Score:</span>
+<span class="text-sm font-bold text-amber-600 dark:text-amber-400">82.1%</span>
+</div>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                PT-1044 <span class="text-sm font-normal text-slate-500 dark:text-slate-400">(Ward B, Room 05)</span>
+</h3>
+<p class="text-sm text-slate-700 dark:text-slate-300 mt-1 font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-amber-500">pulmonology</span>
+                                Respiration Rate 28/min
+                            </p>
+</div>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Panel: Incident Analysis -->
+<section class="flex-1 flex flex-col bg-background-light dark:bg-background-dark overflow-y-auto">
+<div class="p-6">
+<div class="flex items-center justify-between mb-6">
+<div>
+<h2 class="text-slate-900 dark:text-white text-2xl font-bold leading-tight">Incident Analysis: PT-4921</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Detected at 10:42 AM • Isolation Forest Model</p>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-[#1a2633] border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined text-[18px]">history</span>
+                        View Full History
+                    </button>
+</div>
+</div>
+<!-- Main Chart Area (Mockup) -->
+<div class="bg-white dark:bg-[#15212c] rounded-xl border border-slate-200 dark:border-slate-800 p-5 mb-6 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-red-500 text-[20px]">monitor_heart</span>
+                        Heart Rate - 10 Min Window Before Anomaly
+                    </h3>
+<div class="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+<div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600"></div> Baseline</div>
+<div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-full bg-red-500"></div> Anomaly Detected</div>
+</div>
+</div>
+<div class="h-64 w-full relative border-l border-b border-slate-200 dark:border-slate-700 pl-2 pb-2 mt-4">
+<!-- Chart Mockup -->
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 100 100">
+<!-- Grid lines -->
+<line class="text-slate-500" stroke="currentColor" stroke-opacity="0.1" stroke-width="0.5" x1="0" x2="100" y1="20" y2="20"></line>
+<line class="text-slate-500" stroke="currentColor" stroke-opacity="0.1" stroke-width="0.5" x1="0" x2="100" y1="40" y2="40"></line>
+<line class="text-slate-500" stroke="currentColor" stroke-opacity="0.1" stroke-width="0.5" x1="0" x2="100" y1="60" y2="60"></line>
+<line class="text-slate-500" stroke="currentColor" stroke-opacity="0.1" stroke-width="0.5" x1="0" x2="100" y1="80" y2="80"></line>
+<!-- Baseline HR Line -->
+<polyline fill="none" points="0,70 10,72 20,68 30,75 40,65 50,70 60,68" stroke="#64748b" stroke-dasharray="2,2" stroke-width="1.5"></polyline>
+<!-- Actual HR Line (Spiking) -->
+<polyline fill="none" points="0,75 10,73 20,70 30,72 40,68 50,65 60,60 70,45 80,25 90,15 100,10" stroke="#137fec" stroke-width="2"></polyline>
+<!-- Anomaly Area Highlight -->
+<rect fill="#ef4444" fill-opacity="0.1" height="100" width="25" x="75" y="0"></rect>
+<circle cx="85" cy="20" fill="#ef4444" r="2"></circle>
+<text class="font-bold" fill="#ef4444" font-size="4" text-anchor="middle" x="85" y="15">152 bpm</text>
+</svg>
+<!-- Y Axis Labels -->
+<div class="absolute -left-8 top-0 h-full flex flex-col justify-between text-xs text-slate-500 pb-2">
+<span>160</span>
+<span>120</span>
+<span>80</span>
+<span>40</span>
+</div>
+<!-- X Axis Labels -->
+<div class="absolute -bottom-6 left-0 w-full flex justify-between text-xs text-slate-500 pl-2">
+<span>10:32</span>
+<span>10:37</span>
+<span>10:42 (Now)</span>
+</div>
+</div>
+</div>
+<!-- Details & Actions Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Anomaly Details -->
+<div class="bg-white dark:bg-[#15212c] rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+<h3 class="text-base font-semibold text-slate-900 dark:text-white mb-4 border-b border-slate-200 dark:border-slate-800 pb-2">Model Output Details</h3>
+<ul class="space-y-3 text-sm">
+<li class="flex justify-between items-center">
+<span class="text-slate-500 dark:text-slate-400">Contributing Factor 1:</span>
+<span class="text-slate-900 dark:text-white font-medium">Heart Rate Variance (45%)</span>
+</li>
+<li class="flex justify-between items-center">
+<span class="text-slate-500 dark:text-slate-400">Contributing Factor 2:</span>
+<span class="text-slate-900 dark:text-white font-medium">Systolic BP Trend (30%)</span>
+</li>
+<li class="flex justify-between items-center">
+<span class="text-slate-500 dark:text-slate-400">Contributing Factor 3:</span>
+<span class="text-slate-900 dark:text-white font-medium">SpO2 Stability (15%)</span>
+</li>
+<li class="flex justify-between items-center pt-2 border-t border-slate-100 dark:border-slate-800/50">
+<span class="text-slate-500 dark:text-slate-400">Confidence Score:</span>
+<span class="text-primary font-bold">98.5%</span>
+</li>
+</ul>
+</div>
+<!-- Action Panel -->
+<div class="bg-white dark:bg-[#15212c] rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm flex flex-col justify-between">
+<div>
+<h3 class="text-base font-semibold text-slate-900 dark:text-white mb-2">Required Action</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Please review the anomaly and take appropriate action. This alert is currently marked as <strong class="text-red-500">UNACKNOWLEDGED</strong>.</p>
+</div>
+<div class="flex flex-col gap-3">
+<button class="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-white text-sm font-semibold shadow-sm hover:bg-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+                            Acknowledge Alert
+                        </button>
+<div class="flex gap-3">
+<button class="flex-1 flex items-center justify-center gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-2 text-red-700 dark:text-red-400 text-sm font-medium border border-red-200 dark:border-red-800/30 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+<span class="material-symbols-outlined text-[18px]">campaign</span>
+                                Escalate
+                            </button>
+<button class="flex-1 flex items-center justify-center gap-2 rounded-lg bg-slate-100 dark:bg-slate-800 px-4 py-2 text-slate-700 dark:text-slate-300 text-sm font-medium border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+<span class="material-symbols-outlined text-[18px]">close</span>
+                                False Positive
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</body></html>

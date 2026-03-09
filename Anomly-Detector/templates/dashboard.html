@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — AnomalyGuard{% endblock %}
+{% block header_title %}📊 Real-Time Dashboard{% endblock %}
+
+{% block content %}
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card primary">
+        <div class="kpi-header">
+            <div class="kpi-icon primary">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <span class="kpi-trend up">● Live</span>
+        </div>
+        <div class="kpi-value" id="kpi-patients">—</div>
+        <div class="kpi-label">Total Patients Monitored</div>
+    </div>
+
+    <div class="kpi-card danger">
+        <div class="kpi-header">
+            <div class="kpi-icon danger">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <span class="kpi-trend down" id="kpi-alerts-trend">↑ Active</span>
+        </div>
+        <div class="kpi-value" id="kpi-alerts">—</div>
+        <div class="kpi-label">Active Alerts</div>
+    </div>
+
+    <div class="kpi-card warning">
+        <div class="kpi-header">
+            <div class="kpi-icon warning">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <span class="kpi-trend neutral">Score</span>
+        </div>
+        <div class="kpi-value" id="kpi-score">—</div>
+        <div class="kpi-label">Avg Anomaly Score</div>
+    </div>
+
+    <div class="kpi-card success">
+        <div class="kpi-header">
+            <div class="kpi-icon success">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <span class="kpi-trend up">▲ 0.5%</span>
+        </div>
+        <div class="kpi-value" id="kpi-accuracy">97.2%</div>
+        <div class="kpi-label">Model Accuracy</div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="charts-grid">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Anomaly Score Trend</span>
+            <div class="filter-tabs">
+                <button class="filter-tab active" onclick="loadTrend(1)">24h</button>
+                <button class="filter-tab" onclick="loadTrend(7)">7d</button>
+                <button class="filter-tab" onclick="loadTrend(30)">30d</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Severity Distribution</span>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="severityChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Alerts Table -->
+<div class="card animate-in">
+    <div class="card-header">
+        <span class="card-title">Recent Anomaly Detections</span>
+        <a href="/alerts" class="btn btn-sm">View All →</a>
+    </div>
+    <div style="overflow-x: auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Patient ID</th>
+                    <th>Score</th>
+                    <th>Severity</th>
+                    <th>Heart Rate</th>
+                    <th>SpO₂</th>
+                    <th>Temp</th>
+                    <th>BP</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody id="recent-alerts-table">
+                <tr><td colspan="8" class="empty-state" style="padding: 40px;">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ─── Charts ─────────────────────────────────────────
+const chartColors = {
+    primary: '#6366f1',
+    primaryLight: '#818cf8',
+    high: '#ef4444',
+    medium: '#f59e0b',
+    low: '#22c55e',
+    grid: 'rgba(255,255,255,0.04)',
+    text: '#64748b'
+};
+
+const chartDefaults = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+        x: { grid: { color: chartColors.grid }, ticks: { color: chartColors.text, font: { size: 11 } } },
+        y: { grid: { color: chartColors.grid }, ticks: { color: chartColors.text, font: { size: 11 } } }
+    }
+};
+
+let trendChart = new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: { labels: [], datasets: [{
+        label: 'Anomaly Score',
+        data: [],
+        borderColor: chartColors.primary,
+        backgroundColor: 'rgba(99, 102, 241, 0.08)',
+        fill: true,
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 5
+    }] },
+    options: { ...chartDefaults, scales: {
+        ...chartDefaults.scales,
+        y: { ...chartDefaults.scales.y, min: 0, max: 100 }
+    }}
+});
+
+let severityChart = new Chart(document.getElementById('severityChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['High', 'Medium', 'Low'],
+        datasets: [{
+            data: [0, 0, 0],
+            backgroundColor: [chartColors.high, chartColors.medium, chartColors.low],
+            borderWidth: 0,
+            hoverOffset: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '70%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { color: chartColors.text, padding: 16, usePointStyle: true, pointStyle: 'circle' }
+            }
+        }
+    }
+});
+
+// ─── Data Loading ───────────────────────────────────
+function loadTrend(days) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    fetch(`/api/alerts/trend?days=${days}`)
+        .then(r => r.json())
+        .then(data => {
+            trendChart.data.labels = data.map(d => d.timestamp);
+            trendChart.data.datasets[0].data = data.map(d => d.score);
+            trendChart.update('none');
+        })
+        .catch(err => console.warn('[TREND] fetch error:', err));
+}
+
+function loadAlerts() {
+    fetch('/api/alerts?limit=10')
+        .then(r => r.json())
+        .then(alerts => {
+            const tbody = document.getElementById('recent-alerts-table');
+            if (!alerts || alerts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:40px; color:var(--text-muted);">No alerts yet. Waiting for data…</td></tr>';
+                return;
+            }
+            tbody.innerHTML = alerts.map(a => `
+                <tr class="animate-in">
+                    <td style="color:var(--text-primary); font-weight:600;">${a.patient_id}</td>
+                    <td><strong style="color:var(--${a.severity.toLowerCase()})">${a.anomaly_score}</strong></td>
+                    <td><span class="badge ${a.severity.toLowerCase()}"><span class="badge-dot"></span>${a.severity}</span></td>
+                    <td>${a.heart_rate}</td>
+                    <td>${a.spo2}</td>
+                    <td>${a.temperature}</td>
+                    <td>${a.bp}</td>
+                    <td style="color:var(--text-muted)">${a.timestamp}</td>
+                </tr>
+            `).join('');
+        })
+        .catch(err => console.warn('[ALERTS] fetch error:', err));
+}
+
+// ─── Real-time Hooks ────────────────────────────────
+function onStatsUpdate(data) {
+    if (!data) return;
+    const el = id => document.getElementById(id);
+    el('kpi-patients').textContent = data.total_patients ?? '—';
+    el('kpi-alerts').textContent   = data.active_alerts ?? '—';
+    el('kpi-score').textContent    = data.avg_anomaly_score ?? '—';
+    el('kpi-accuracy').textContent = (data.model_accuracy ?? 97.2) + '%';
+
+    if (data.severity_distribution) {
+        severityChart.data.datasets[0].data = [
+            data.severity_distribution.high  || 0,
+            data.severity_distribution.medium || 0,
+            data.severity_distribution.low   || 0
+        ];
+        severityChart.update('none');
+    }
+}
+
+function onNewAlert(data) {
+    loadAlerts();
+    // Append to trend chart
+    trendChart.data.labels.push(data.timestamp?.split(', ')[1]?.substring(0, 8) || '');
+    trendChart.data.datasets[0].data.push(data.anomaly_score);
+    if (trendChart.data.labels.length > 80) {
+        trendChart.data.labels.shift();
+        trendChart.data.datasets[0].data.shift();
+    }
+    trendChart.update('none');
+}
+
+function refreshStats() {
+    fetch('/api/stats')
+        .then(r => r.json())
+        .then(onStatsUpdate)
+        .catch(err => console.warn('[STATS] fetch error:', err));
+}
+
+async function addPatient() {
+    const patientData = {
+        name: document.getElementById('p_name').value,
+        age: document.getElementById('p_age').value,
+        room: document.getElementById('p_room').value
+    };
+
+    const response = await fetch('/api/patients/add', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(patientData)
+    });
+
+    if (response.ok) {
+        alert("Patient Added Successfully! Monitoring will start automatically.");
+        location.reload(); // Refresh to see the new patient in the list
+    }
+}
+
+
+async function showPatientDetail(patientId) {
+    const response = await fetch(`/api/patients/${patientId}/history`);
+    const data = await response.json();
+    
+    // Use Plotly (or Chart.js) to render a specific trend for this patient
+    const trace = {
+        x: data.map(d => d.timestamp),
+        y: data.map(d => d.anomaly_score),
+        mode: 'lines+markers',
+        name: 'AI Risk Score',
+        line: {color: '#ff4b4b'}
+    };
+    
+    const layout = {
+        title: `Health Trend: Patient ${patientId}`,
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: {color: '#fff'}
+    };
+
+    Plotly.newPlot('patient-trend-chart', [trace], layout);
+}
+
+<div class="card bg-dark text-white p-3 mt-3">
+    <h5>Add New Patient</h5>
+    <input type="text" id="p_name" placeholder="Name" class="form-control mb-2 bg-secondary text-white">
+    <input type="number" id="p_age" placeholder="Age" class="form-control mb-2 bg-secondary text-white">
+    <input type="text" id="p_room" placeholder="Room (e.g. ICU-105)" class="form-control mb-2 bg-secondary text-white">
+    <button onclick="addNewPatient()" class="btn btn-primary w-100">Start AI Monitoring</button>
+</div>
+
+<div class="card bg-dark text-white p-3 mt-3">
+    <h5>Add New Patient</h5>
+    <input type="text" id="p_name" placeholder="Name" class="form-control mb-2 bg-secondary text-white">
+    <input type="number" id="p_age" placeholder="Age" class="form-control mb-2 bg-secondary text-white">
+    <input type="text" id="p_room" placeholder="Room (e.g. ICU-105)" class="form-control mb-2 bg-secondary text-white">
+    <button onclick="addNewPatient()" class="btn btn-primary w-100">Start AI Monitoring</button>
+</div>
+
+// ─── Initial Load ───────────────────────────────────
+loadTrend(1);
+loadAlerts();
+refreshStats();
+
+// Periodic fallback refresh every 15 seconds (in case SocketIO drops)
+setInterval(() => { refreshStats(); loadAlerts(); }, 15000);
+</script>
+{% endblock %}

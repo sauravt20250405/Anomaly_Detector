@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+{% block title %}Analytics — AnomalyGuard{% endblock %}
+{% block header_title %}📈 Analytics{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="filter-bar">
+    <select id="filter-timerange" onchange="reloadCharts()">
+        <option value="1">Last 24 Hours</option>
+        <option value="7" selected>Last 7 Days</option>
+        <option value="30">Last 30 Days</option>
+    </select>
+    <select id="filter-patient" onchange="reloadCharts()">
+        <option value="">All Patients</option>
+    </select>
+    <div class="auto-refresh-toggle">
+        <span>Auto-Refresh</span>
+        <label class="toggle-switch">
+            <input type="checkbox" id="auto-refresh" checked>
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="charts-grid">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Anomaly Score Distribution</span>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="scoreDistChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Alerts Over Time</span>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="alertsOverTimeChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="charts-grid-3">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Heart Rate Distribution</span>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="hrChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">SpO₂ Distribution</span>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="spo2Chart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Temperature Distribution</span>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="tempChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Severity Breakdown -->
+<div class="charts-grid">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Severity Breakdown</span>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="severityBarChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <span class="card-title">Patient Alert Frequency</span>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="patientFreqChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const C = {
+    primary: '#6366f1', primaryLight: '#818cf8',
+    high: '#ef4444', medium: '#f59e0b', low: '#22c55e',
+    cyan: '#06b6d4', grid: 'rgba(255,255,255,0.04)', text: '#64748b'
+};
+
+const baseOpts = {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+        x: { grid: { color: C.grid }, ticks: { color: C.text, font: { size: 10 } } },
+        y: { grid: { color: C.grid }, ticks: { color: C.text, font: { size: 10 } } }
+    }
+};
+
+// Score Distribution (histogram)
+let scoreDistChart = new Chart(document.getElementById('scoreDistChart'), {
+    type: 'bar',
+    data: { labels: [], datasets: [{ data: [], backgroundColor: C.primary + '88', borderColor: C.primary, borderWidth: 1 }] },
+    options: baseOpts
+});
+
+// Alerts Over Time (line)
+let alertsOverTimeChart = new Chart(document.getElementById('alertsOverTimeChart'), {
+    type: 'line',
+    data: { labels: [], datasets: [
+        { label: 'High', data: [], borderColor: C.high, backgroundColor: C.high + '18', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 0 },
+        { label: 'Medium', data: [], borderColor: C.medium, backgroundColor: C.medium + '18', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 0 },
+        { label: 'Low', data: [], borderColor: C.low, backgroundColor: C.low + '18', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 0 }
+    ] },
+    options: { ...baseOpts, plugins: { legend: { display: true, position: 'top', labels: { color: C.text, padding: 12, usePointStyle: true, pointStyle: 'circle' } } } }
+});
+
+// Vital sign histograms
+function makeHistogram(canvasId, color) {
+    return new Chart(document.getElementById(canvasId), {
+        type: 'bar',
+        data: { labels: [], datasets: [{ data: [], backgroundColor: color + '66', borderColor: color, borderWidth: 1 }] },
+        options: baseOpts
+    });
+}
+let hrChart = makeHistogram('hrChart', C.high);
+let spo2Chart = makeHistogram('spo2Chart', C.cyan);
+let tempChart = makeHistogram('tempChart', C.medium);
+
+// Severity Bar
+let severityBarChart = new Chart(document.getElementById('severityBarChart'), {
+    type: 'bar',
+    data: {
+        labels: ['High', 'Medium', 'Low'],
+        datasets: [{ data: [0, 0, 0], backgroundColor: [C.high + 'cc', C.medium + 'cc', C.low + 'cc'], borderRadius: 6, barThickness: 50 }]
+    },
+    options: { ...baseOpts, indexAxis: 'y' }
+});
+
+// Patient Frequency
+let patientFreqChart = new Chart(document.getElementById('patientFreqChart'), {
+    type: 'bar',
+    data: { labels: [], datasets: [{ data: [], backgroundColor: C.primaryLight + '88', borderColor: C.primaryLight, borderWidth: 1, borderRadius: 4 }] },
+    options: baseOpts
+});
+
+// ─── Load Patients ──────────────────────────────────
+fetch('/api/patients').then(r => r.json()).then(patients => {
+    const sel = document.getElementById('filter-patient');
+    patients.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.name} (${p.id})`;
+        sel.appendChild(opt);
+    });
+});
+
+// ─── Histogram helper ───────────────────────────────
+function buildHistogram(values, bins = 12) {
+    if (!values.length) return { labels: [], counts: [] };
+    const min = Math.min(...values), max = Math.max(...values);
+    const step = (max - min) / bins || 1;
+    const labels = [], counts = new Array(bins).fill(0);
+    for (let i = 0; i < bins; i++) {
+        const lo = min + i * step;
+        labels.push(lo.toFixed(1));
+    }
+    values.forEach(v => {
+        let idx = Math.floor((v - min) / step);
+        if (idx >= bins) idx = bins - 1;
+        counts[idx]++;
+    });
+    return { labels, counts };
+}
+
+// ─── Reload Charts ──────────────────────────────────
+function reloadCharts() {
+    const days = document.getElementById('filter-timerange').value;
+    const patientId = document.getElementById('filter-patient').value;
+
+    let url = `/api/alerts/trend?days=${days}`;
+    fetch(url).then(r => r.json()).then(data => {
+        let filtered = patientId ? data.filter(d => d.patient_id == patientId) : data;
+
+        // Score distribution
+        const scores = filtered.map(d => d.score);
+        const hist = buildHistogram(scores);
+        scoreDistChart.data.labels = hist.labels;
+        scoreDistChart.data.datasets[0].data = hist.counts;
+        scoreDistChart.update('none');
+
+        // Alerts over time (by severity)
+        const ts = [...new Set(filtered.map(d => d.timestamp))].sort();
+        const highData = ts.map(t => filtered.filter(d => d.timestamp === t && d.severity === 'HIGH').length);
+        const medData = ts.map(t => filtered.filter(d => d.timestamp === t && d.severity === 'MEDIUM').length);
+        const lowData = ts.map(t => filtered.filter(d => d.timestamp === t && d.severity === 'LOW').length);
+        alertsOverTimeChart.data.labels = ts;
+        alertsOverTimeChart.data.datasets[0].data = highData;
+        alertsOverTimeChart.data.datasets[1].data = medData;
+        alertsOverTimeChart.data.datasets[2].data = lowData;
+        alertsOverTimeChart.update('none');
+
+        // Severity breakdown
+        const sHigh = filtered.filter(d => d.severity === 'HIGH').length;
+        const sMed = filtered.filter(d => d.severity === 'MEDIUM').length;
+        const sLow = filtered.filter(d => d.severity === 'LOW').length;
+        severityBarChart.data.datasets[0].data = [sHigh, sMed, sLow];
+        severityBarChart.update('none');
+
+        // Patient frequency
+        const freq = {};
+        filtered.forEach(d => { freq[d.patient_id] = (freq[d.patient_id] || 0) + 1; });
+        const sortedP = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        patientFreqChart.data.labels = sortedP.map(p => p[0]);
+        patientFreqChart.data.datasets[0].data = sortedP.map(p => p[1]);
+        patientFreqChart.update('none');
+    });
+
+    // Vital signs distribution
+    let vitalsUrl = `/api/alerts?limit=200&severity=ALL`;
+    fetch(vitalsUrl).then(r => r.json()).then(alerts => {
+        let filtered = patientId ? alerts.filter(a => a.patient_id == patientId) : alerts;
+
+        const hrVals = filtered.map(a => parseFloat(a.heart_rate)).filter(v => !isNaN(v));
+        const spo2Vals = filtered.map(a => parseFloat(a.spo2)).filter(v => !isNaN(v));
+        const tempVals = filtered.map(a => parseFloat(a.temperature)).filter(v => !isNaN(v));
+
+        const hrHist = buildHistogram(hrVals);
+        hrChart.data.labels = hrHist.labels;
+        hrChart.data.datasets[0].data = hrHist.counts;
+        hrChart.update('none');
+
+        const spo2Hist = buildHistogram(spo2Vals);
+        spo2Chart.data.labels = spo2Hist.labels;
+        spo2Chart.data.datasets[0].data = spo2Hist.counts;
+        spo2Chart.update('none');
+
+        const tempHist = buildHistogram(tempVals);
+        tempChart.data.labels = tempHist.labels;
+        tempChart.data.datasets[0].data = tempHist.counts;
+        tempChart.update('none');
+    });
+}
+
+async function loadAnalytics() {
+    const response = await fetch('/api/alerts/trend?days=1');
+    const data = await response.json();
+
+    const trace = {
+        x: data.map(d => d.timestamp),
+        y: data.map(d => d.score),
+        type: 'scatter',
+        mode: 'lines+markers',
+        marker: { color: '#ff4b4b' },
+        name: 'Anomaly Score'
+    };
+
+    const layout = {
+        title: 'System-Wide Risk Trend',
+        xaxis: { title: 'Time' },
+        yaxis: { title: 'Risk Score (0-100)' },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#ffffff' }
+    };
+
+    Plotly.newPlot('trend-chart', [trace], layout);
+}
+
+// Auto-refresh
+setInterval(() => {
+    if (document.getElementById('auto-refresh').checked) reloadCharts();
+}, 15000);
+
+// Initial load
+reloadCharts();
+</script>
+{% endblock %}

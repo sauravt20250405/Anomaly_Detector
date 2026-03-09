@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+
+<html class="dark"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Real-time Monitoring Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#137fec",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+            "surface-dark": "#1a2634",
+            "surface-hover": "#25364a",
+            "border-dark": "#2a3b52",
+            "text-muted": "#8b9fb6",
+            "status-green": "#10b981",
+            "status-yellow": "#f59e0b",
+            "status-red": "#ef4444"
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display overflow-x-hidden min-h-screen flex">
+<aside class="w-64 bg-surface-dark border-r border-border-dark flex flex-col justify-between hidden md:flex h-screen sticky top-0">
+<div class="flex flex-col gap-4 p-4">
+<div class="flex gap-3 items-center mb-6">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 bg-primary/20 flex items-center justify-center text-primary" data-alt="MediMind AI Logo">
+<span class="material-symbols-outlined text-2xl">medical_services</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-slate-100 text-base font-bold leading-normal">MediMind AI</h1>
+<p class="text-slate-500 dark:text-text-muted text-xs font-normal leading-normal tracking-wide uppercase">Admin Portal</p>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="text-sm font-medium leading-normal">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-hover transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">groups</span>
+<span class="text-sm font-medium leading-normal">Patients</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-hover transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">notifications</span>
+<span class="text-sm font-medium leading-normal">Alerts</span>
+<span class="ml-auto bg-status-red text-white text-[10px] font-bold px-2 py-0.5 rounded-full">3</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-hover transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">monitor_heart</span>
+<span class="text-sm font-medium leading-normal">System Health</span>
+</a>
+</div>
+</div>
+<div class="p-4">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-surface-hover transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+<span class="text-sm font-medium leading-normal">Settings</span>
+</a>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 h-screen overflow-y-auto">
+<header class="flex items-center justify-between border-b border-slate-200 dark:border-border-dark px-6 py-4 bg-white dark:bg-surface-dark sticky top-0 z-10">
+<div class="flex items-center gap-3">
+<h2 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight">Real-time Monitoring</h2>
+<span class="flex h-2 w-2 rounded-full bg-status-green animate-pulse"></span>
+</div>
+<div class="flex items-center gap-4">
+<button class="hidden sm:flex items-center justify-center gap-2 rounded-lg h-9 px-4 bg-primary hover:bg-primary/90 text-white text-sm font-medium transition-colors">
+<span class="material-symbols-outlined text-lg">add</span>
+<span>Add Patient</span>
+</button>
+<div class="h-8 w-px bg-slate-200 dark:bg-border-dark hidden sm:block"></div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-9 border border-slate-200 dark:border-border-dark" data-alt="Doctor Profile Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDF9buY4ozflHqpCY7093ZXNpnxcdzSTjTvAGOKM4RB7woRWbACHo4v9vrlBpw_eBggNL-FExalGk12SEJubKqEoLedE7_rLNSHJl6evJceSh_a7meSMmhJvJ097Y1jZ2HuEIJGyigaa_K0nay-yKLOhMNZIfe54Ky2qa-OhbpWbXTsKn7Y5OHhnmTrydLIe6aeXlQDgEpPaAP5PA2FYsIA3EqkoIdcKVs7Q-GqlythIw2-uKEm9tIxZnbh_1b8fiv4hwvW516D2N10");'></div>
+</div>
+</header>
+<div class="p-6 flex flex-col gap-6">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="flex flex-col gap-3 rounded-xl p-5 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark shadow-sm">
+<div class="flex justify-between items-center">
+<p class="text-slate-500 dark:text-text-muted text-sm font-medium">Total Monitored</p>
+<span class="material-symbols-outlined text-primary text-xl">personal_injury</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-slate-100 text-3xl font-bold">142</p>
+<span class="flex items-center text-status-green text-xs font-medium bg-status-green/10 px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> 12%
+            </span>
+</div>
+</div>
+<div class="flex flex-col gap-3 rounded-xl p-5 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark shadow-sm">
+<div class="flex justify-between items-center">
+<p class="text-slate-500 dark:text-text-muted text-sm font-medium">Active Alerts</p>
+<span class="material-symbols-outlined text-status-red text-xl">warning</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-slate-100 text-3xl font-bold">7</p>
+<span class="flex items-center text-status-red text-xs font-medium bg-status-red/10 px-1.5 py-0.5 rounded">
+                3 Critical
+            </span>
+</div>
+</div>
+<div class="flex flex-col gap-3 rounded-xl p-5 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark shadow-sm">
+<div class="flex justify-between items-center">
+<p class="text-slate-500 dark:text-text-muted text-sm font-medium">System Health</p>
+<span class="material-symbols-outlined text-status-green text-xl">dns</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-slate-100 text-3xl font-bold">99.9%</p>
+<span class="text-slate-500 dark:text-text-muted text-xs">Kafka &amp; ML Stable</span>
+</div>
+</div>
+</div>
+<div>
+<div class="flex justify-between items-end mb-4">
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold">Critical Patients Overview</h3>
+<div class="flex gap-2 text-sm text-slate-500 dark:text-text-muted">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-red"></span> Critical</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-yellow"></span> Warning</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-green"></span> Stable</span>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+<div class="rounded-xl border border-status-red bg-status-red/5 p-4 flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex gap-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Patient Portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB3FqShanu3UM4dBLTwOez5DlDrAenmrwbzRiJRnwQ6bVQwJ4xDv9ncWZSWVFH6Cy9ZDBahLmapndLkMo8gJrhQ4qucp5WdrPfgjcAp_Mepos6dpIhBRh50VC_vVaJLeRDnuf_kbP8cQbJDC0Mv1D4noCsDBPEPoAxVV4LSIQkWhqgRrdaFFzYY9ekq4J24HBSsNaf-hDry1mCqlbRENAIcT3Zk-dY9GkH_bcLD8PbLy2ZnUSa8_GQR2FWusOEaRu-xdTx-qy4yY2Xm");'></div>
+<div>
+<h4 class="text-slate-900 dark:text-slate-100 font-semibold">Sarah Jenkins</h4>
+<p class="text-slate-500 dark:text-text-muted text-xs">Bed 4A - ICU</p>
+</div>
+</div>
+<span class="bg-status-red text-white text-xs font-bold px-2 py-1 rounded">Tachycardia</span>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<div class="bg-white dark:bg-surface-dark rounded border border-slate-200 dark:border-border-dark p-2 text-center">
+<p class="text-[10px] text-slate-500 dark:text-text-muted uppercase tracking-wider">HR</p>
+<p class="text-status-red font-bold text-lg">145 <span class="text-[10px] font-normal text-slate-500">bpm</span></p>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded border border-slate-200 dark:border-border-dark p-2 text-center">
+<p class="text-[10px] text-slate-500 dark:text-text-muted uppercase tracking-wider">SpO2</p>
+<p class="text-status-yellow font-bold text-lg">92 <span class="text-[10px] font-normal text-slate-500">%</span></p>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded border border-slate-200 dark:border-border-dark p-2 text-center">
+<p class="text-[10px] text-slate-500 dark:text-text-muted uppercase tracking-wider">BP</p>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-lg">140/90</p>
+</div>
+</div>
+<div class="h-12 w-full bg-slate-100 dark:bg-surface-dark rounded relative overflow-hidden">
+<svg class="w-full h-full stroke-status-red fill-status-red/20" preserveaspectratio="none" viewbox="0 0 100 30">
+<path d="M0,20 Q10,20 15,10 T30,20 T45,15 T55,25 T70,5 L75,25 L85,15 T100,20 V30 H0 Z" stroke-width="1.5"></path>
+</svg>
+</div>
+</div>
+<div class="rounded-xl border border-status-yellow bg-status-yellow/5 p-4 flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex gap-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Patient Portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuARssQ_uCPQzUR-o3IiagI5orbwrP4XTvU3XKPEEn_Y4YyBP-QBIXgK3M71CZn8ab6NSBFIudwrw09S8HTGjt1J6It1s7YfdFQwqsefduf4CPt59kWKQJm3Foyyt6vSpRfJ6pcvmPr-yMpKrwgZKB4r5_MZd7dIn1ZSq9RSonKDgEUkanI72bwmAQo86w0DgToJi0iKzwqVmytuygB8GT47ORxj7D5i3zeSdDLP62mQwuEO2-GaM_ANPJeMe1IDx78ueE9ELJ3nyHSx");'></div>
+<div>
+<h4 class="text-slate-900 dark:text-slate-100 font-semibold">Robert Chen</h4>
+<p class="text-slate-500 dark:text-text-muted text-xs">Bed 2B - Ward</p>
+</div>
+</div>
+<span class="bg-status-yellow text-slate-900 text-xs font-bold px-2 py-1 rounded">Low SpO2</span>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<div class="bg-white dark:bg-surface-dark rounded border border-slate-200 dark:border-border-dark p-2 text-center">
+<p class="text-[10px] text-slate-500 dark:text-text-muted uppercase tracking-wider">HR</p>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-lg">82 <span class="text-[10px] font-normal text-slate-500">bpm</span></p>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded border border-slate-200 dark:border-border-dark p-2 text-center">
+<p class="text-[10px] text-slate-500 dark:text-text-muted uppercase tracking-wider">SpO2</p>
+<p class="text-status-yellow font-bold text-lg">89 <span class="text-[10px] font-normal text-slate-500">%</span></p>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded border border-slate-200 dark:border-border-dark p-2 text-center">
+<p class="text-[10px] text-slate-500 dark:text-text-muted uppercase tracking-wider">BP</p>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-lg">120/80</p>
+</div>
+</div>
+<div class="h-12 w-full bg-slate-100 dark:bg-surface-dark rounded relative overflow-hidden">
+<svg class="w-full h-full stroke-status-yellow fill-status-yellow/20" preserveaspectratio="none" viewbox="0 0 100 30">
+<path d="M0,15 Q15,18 25,15 T50,20 T75,10 T100,15 V30 H0 Z" stroke-width="1.5"></path>
+</svg>
+</div>
+</div>
+<div class="rounded-xl border border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark p-4 flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex gap-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Patient Portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBl99hltTrsyCtbHm9bujX0qiM9wFnbi6UDWb3TkXLVLFG_oX8YOmDE4ZEiv18EByVjs7g_SYewEylvq4EBW_cOeUNvbbStD1kOPEQTz40CwFeLSEbwQ40dgreek9dfxEf8BWusHruVRMUct-j6KygOLUljdeS1I0pla6W4NmnQ0-KrqfMcYVbqpLrTgKZQksIUqrYkVniAJTRmM6pLFPfftG8BJ3fC5egCsGkODTO_nufSG0WTYbvAPdZJbBaDG441k4kAoZaTniGc");'></div>
+<div>
+<h4 class="text-slate-900 dark:text-slate-100 font-semibold">Elena Rostova</h4>
+<p class="text-slate-500 dark:text-text-muted text-xs">Bed 1C - Ward</p>
+</div>
+</div>
+<span class="bg-status-green/20 text-status-green text-xs font-bold px-2 py-1 rounded">Stable</span>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<div class="bg-slate-50 dark:bg-background-dark rounded border border-slate-100 dark:border-surface-hover p-2 text-center">
+<p class="text-[10px] text-slate-500 dark:text-text-muted uppercase tracking-wider">HR</p>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-lg">72 <span class="text-[10px] font-normal text-slate-500">bpm</span></p>
+</div>
+<div class="bg-slate-50 dark:bg-background-dark rounded border border-slate-100 dark:border-surface-hover p-2 text-center">
+<p class="text-[10px] text-slate-500 dark:text-text-muted uppercase tracking-wider">SpO2</p>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-lg">98 <span class="text-[10px] font-normal text-slate-500">%</span></p>
+</div>
+<div class="bg-slate-50 dark:bg-background-dark rounded border border-slate-100 dark:border-surface-hover p-2 text-center">
+<p class="text-[10px] text-slate-500 dark:text-text-muted uppercase tracking-wider">BP</p>
+<p class="text-slate-900 dark:text-slate-100 font-bold text-lg">115/75</p>
+</div>
+</div>
+<div class="h-12 w-full bg-slate-50 dark:bg-background-dark rounded relative overflow-hidden">
+<svg class="w-full h-full stroke-status-green fill-status-green/10" preserveaspectratio="none" viewbox="0 0 100 30">
+<path d="M0,15 Q20,15 25,5 L30,25 L35,15 T100,15 V30 H0 Z" stroke-width="1.5"></path>
+</svg>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

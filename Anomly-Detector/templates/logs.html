@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Alert Logs — AnomalyGuard{% endblock %}
+{% block header_title %}📋 Alert Logs{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="filter-bar">
+    <select id="log-severity" onchange="loadLogs()">
+        <option value="ALL">All Severities</option>
+        <option value="HIGH">🔴 High</option>
+        <option value="MEDIUM">🟡 Medium</option>
+        <option value="LOW">🟢 Low</option>
+    </select>
+    <select id="log-patient" onchange="loadLogs()">
+        <option value="">All Patients</option>
+    </select>
+    <select id="log-limit" onchange="loadLogs()">
+        <option value="25">25 rows</option>
+        <option value="50" selected>50 rows</option>
+        <option value="100">100 rows</option>
+        <option value="200">200 rows</option>
+    </select>
+    <button class="btn btn-sm" onclick="exportCSV()">📥 Export CSV</button>
+    <div class="auto-refresh-toggle">
+        <span>Live Updates</span>
+        <label class="toggle-switch">
+            <input type="checkbox" id="log-live" checked>
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="kpi-card danger" style="padding: 16px;">
+        <div class="kpi-value" id="log-high" style="font-size: 1.6rem;">—</div>
+        <div class="kpi-label">High Severity</div>
+    </div>
+    <div class="kpi-card warning" style="padding: 16px;">
+        <div class="kpi-value" id="log-med" style="font-size: 1.6rem;">—</div>
+        <div class="kpi-label">Medium Severity</div>
+    </div>
+    <div class="kpi-card success" style="padding: 16px;">
+        <div class="kpi-value" id="log-low" style="font-size: 1.6rem;">—</div>
+        <div class="kpi-label">Low Severity</div>
+    </div>
+    <div class="kpi-card info" style="padding: 16px;">
+        <div class="kpi-value" id="log-total" style="font-size: 1.6rem;">—</div>
+        <div class="kpi-label">Total Alerts</div>
+    </div>
+</div>
+
+<!-- Full Alert Table -->
+<div class="card animate-in">
+    <div class="card-header">
+        <span class="card-title">Complete Alert Log</span>
+        <span class="kpi-label" id="log-last-update" style="font-size: 0.78rem;"></span>
+    </div>
+    <div style="overflow-x: auto; max-height: calc(100vh - 380px);">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Patient</th>
+                    <th>Score</th>
+                    <th>Severity</th>
+                    <th style="text-align:center">HR</th>
+                    <th style="text-align:center">SpO₂</th>
+                    <th style="text-align:center">Temp</th>
+                    <th>BP</th>
+                    <th>Resp</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="log-table-body">
+                <tr><td colspan="12" style="text-align:center; padding:40px; color:var(--text-muted);">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let logAlerts = [];
+
+// Load patients dropdown
+fetch('/api/patients').then(r => r.json()).then(patients => {
+    const sel = document.getElementById('log-patient');
+    patients.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.name} (${p.id})`;
+        sel.appendChild(opt);
+    });
+});
+
+function loadLogs() {
+    const severity = document.getElementById('log-severity').value;
+    const patientId = document.getElementById('log-patient').value;
+    const limit = document.getElementById('log-limit').value;
+
+    let url = `/api/alerts?limit=${limit}&severity=${severity}`;
+    fetch(url)
+        .then(r => r.json())
+        .then(alerts => {
+            if (patientId) {
+                alerts = alerts.filter(a => a.patient_id == patientId);
+            }
+            logAlerts = alerts;
+            renderTable(alerts);
+            updateSummary(alerts);
+            document.getElementById('log-last-update').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+        });
+}
+
+function renderTable(alerts) {
+    const tbody = document.getElementById('log-table-body');
+    if (!alerts.length) {
+        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; padding:40px; color:var(--text-muted);">No alerts match the filters</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = alerts.map(a => `
+        <tr>
+            <td style="color:var(--text-muted);">#${a.id}</td>
+            <td style="color:var(--text-primary); font-weight:600;">${a.patient_id}</td>
+            <td><strong style="color:var(--${a.severity.toLowerCase()})">${a.anomaly_score}</strong></td>
+            <td><span class="badge ${a.severity.toLowerCase()}"><span class="badge-dot"></span>${a.severity}</span></td>
+            <td style="text-align:center">${a.heart_rate}</td>
+            <td style="text-align:center">${a.spo2}</td>
+            <td style="text-align:center">${a.temperature}</td>
+            <td>${a.bp}</td>
+            <td>${a.respiratory_rate}</td>
+            <td>
+                <span class="status-badge ${a.acknowledged ? 'stable' : 'warning'}">
+                    ${a.acknowledged ? '✓ Ack' : '⚠ Open'}
+                </span>
+            </td>
+            <td style="color:var(--text-muted); font-size: 0.82rem;">${a.timestamp}</td>
+            <td>
+                ${!a.acknowledged ? `<button class="btn btn-sm btn-success" onclick="ackAlert(${a.id})">Ack</button>` : ''}
+            </td>
+        </tr>
+    `).join('');
+}
+
+function updateSummary(alerts) {
+    const high = alerts.filter(a => a.severity === 'HIGH').length;
+    const med = alerts.filter(a => a.severity === 'MEDIUM').length;
+    const low = alerts.filter(a => a.severity === 'LOW').length;
+    document.getElementById('log-high').textContent = high;
+    document.getElementById('log-med').textContent = med;
+    document.getElementById('log-low').textContent = low;
+    document.getElementById('log-total').textContent = alerts.length;
+}
+
+function ackAlert(id) {
+    fetch(`/api/alerts/${id}/acknowledge`, { method: 'POST' })
+        .then(r => r.json())
+        .then(() => loadLogs());
+}
+
+function exportCSV() {
+    if (!logAlerts.length) return;
+    const headers = ['ID', 'Patient', 'Score', 'Severity', 'HR', 'SpO2', 'Temp', 'BP', 'Resp', 'Acknowledged', 'Timestamp'];
+    const rows = logAlerts.map(a => [
+        a.id, a.patient_id, a.anomaly_score, a.severity,
+        a.heart_rate, a.spo2, a.temperature, a.bp, a.respiratory_rate,
+        a.acknowledged ? 'Yes' : 'No', a.timestamp
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `anomaly_alerts_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Real-time updates
+function onNewAlert() {
+    if (document.getElementById('log-live').checked) loadLogs();
+}
+
+loadLogs();
+</script>
+{% endblock %}

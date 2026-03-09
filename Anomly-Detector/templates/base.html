@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Healthcare Anomaly Detection{% endblock %}</title>
+    <meta name="description" content="AI-powered healthcare anomaly detection system with real-time patient monitoring">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    {% block head %}{% endblock %}
+</head>
+<body>
+<div class="app-layout">
+
+    <!-- ─── Sidebar ──────────────────────────────────── -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon">🏥</div>
+            <div>
+                <h1>AnomalyGuard</h1>
+                <span>Healthcare AI</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="/" class="nav-item {{ 'active' if active == 'dashboard' else '' }}" id="nav-dashboard">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                Dashboard
+            </a>
+            <a href="/alerts" class="nav-item {{ 'active' if active == 'alerts' else '' }}" id="nav-alerts">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                Alerts Feed
+            </a>
+            <a href="/analytics" class="nav-item {{ 'active' if active == 'analytics' else '' }}" id="nav-analytics">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Analytics
+            </a>
+            <a href="/logs" class="nav-item {{ 'active' if active == 'logs' else '' }}" id="nav-logs">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                Alert Logs
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-status">
+                <span class="status-dot"></span>
+                <span>ML Engine Active</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ─── Main Area ────────────────────────────────── -->
+    <main class="main-content">
+
+        <!-- ─── Header ───────────────────────────────── -->
+        <header class="header">
+            <div class="header-left">
+                <h2 class="header-title">{% block header_title %}Dashboard{% endblock %}</h2>
+            </div>
+            <div class="header-right">
+                <div class="search-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" placeholder="Search patients or alerts..." id="global-search">
+                </div>
+                <button class="notification-btn" id="notification-bell">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <span class="notification-badge" id="alert-count-badge">0</span>
+                </button>
+                <div class="user-avatar">DR</div>
+            </div>
+        </header>
+
+        <!-- ─── Page Content ─────────────────────────── -->
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+
+    </main>
+</div>
+
+<!-- ─── SocketIO Client ──────────────────────────────── -->
+<script>
+    const socket = io({ transports: ['websocket', 'polling'] });
+    let alertCountGlobal = 0;
+
+    socket.on('connect', () => {
+        console.log('[WS] Connected');
+    });
+
+    socket.on('connect_error', (err) => {
+        console.warn('[WS] Connection error:', err.message);
+    });
+
+    socket.on('disconnect', (reason) => {
+        console.warn('[WS] Disconnected:', reason);
+    });
+
+    socket.on('stats_update', (data) => {
+        alertCountGlobal = data.active_alerts || 0;
+        document.getElementById('alert-count-badge').textContent = alertCountGlobal;
+        if (typeof onStatsUpdate === 'function') onStatsUpdate(data);
+    });
+
+    socket.on('new_alert', (data) => {
+        if (typeof onNewAlert === 'function') onNewAlert(data);
+    });
+
+    // Initial stats fetch (badge only — page-specific onStatsUpdate handles KPIs)
+    fetch('/api/stats')
+        .then(r => r.json())
+        .then(data => {
+            alertCountGlobal = data.active_alerts || 0;
+            document.getElementById('alert-count-badge').textContent = alertCountGlobal;
+        })
+        .catch(err => console.warn('[STATS] Badge fetch error:', err));
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
